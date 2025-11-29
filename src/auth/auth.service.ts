@@ -33,7 +33,7 @@ export class AuthService {
 
     //Generate token
 
-    const token = await this.jwtService.sign(user.id);
+    const token = await this.jwtService.signAsync({sub: user.id});
 
     return {message: 'User created successfully', token, user};
   }
@@ -46,8 +46,8 @@ export class AuthService {
     if (!passwordValid)
       throw new UnauthorizedException('Invalid credentials');
 
-    const token = await this.jwtService.sign(user.id);
+    const token = await this.jwtService.signAsync({sub: user.id});
 
-    return { message: 'Signin successful', token, user };
+    return { message: 'Signin successful', token };
   }
 }
