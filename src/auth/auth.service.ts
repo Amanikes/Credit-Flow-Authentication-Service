@@ -3,18 +3,22 @@ import {
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
+  Inject
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { first } from 'rxjs';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache }  from 'cache-manager';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private cache: Cache
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -67,6 +71,14 @@ export class AuthService {
       role: user.role,
     });
 
+    //Store token in cache
+
+    await this.cache.set(`auth: ${user.id}`, token, 84600);
+
     return { message: 'Signin successful', token };
+
+  }
+  async getUser(dto: {email: string}){
+    return this.userService.findByEmail(dto.email)
   }
 }
