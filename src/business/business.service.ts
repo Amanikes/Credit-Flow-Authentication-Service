@@ -1,26 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
+import { AuthBusiness } from './entities/auth-business.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class BusinessService {
-  create(createBusinessDto: CreateBusinessDto) {
-    return 'This action adds a new business';
+  constructor(
+    @InjectRepository(AuthBusiness)
+    private readonly businessRepository: Repository<AuthBusiness>
+
+  ){}
+
+  async create(data: object){
+    return this.businessRepository.save(data)
   }
 
-  findAll() {
-    return `This action returns all business`;
+  async findOneByEmail(business_email: string) {
+    const business = await this.businessRepository.findOne({ where: { business_email } });
+    if(business){
+      return true;
+    }
+    throw new Error('Business not found');
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} business`;
-  }
-
-  update(id: number, updateBusinessDto: UpdateBusinessDto) {
-    return `This action updates a #${id} business`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} business`;
+  async findOneById(id: string): Promise<boolean> {
+    const business =  await this.businessRepository.findOne({ where: { id } });
+    if(business){
+      return true;
+    }
+    throw new Error('Business not found');
   }
 }
+

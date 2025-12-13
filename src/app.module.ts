@@ -6,6 +6,8 @@ import { BusinessModule } from './business/business.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {TypeOrmModule} from '@nestjs/typeorm'
 import { config } from 'process';
+import { TokensModule } from './tokens/tokens.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [UsersModule, BusinessModule,
@@ -23,7 +25,9 @@ import { config } from 'process';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
       }),
-    })
+    }),
+    TokensModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
