@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { AuthBusiness } from 'src/business/entities/auth-business.entity';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +23,11 @@ export class AuthService {
     private readonly businessService: BusinessService,
     @InjectRepository(AuthUser)
     private readonly userRepository: Repository<AuthUser>,
-    private readonly JwtService: JwtService,
+
+    @InjectRepository(AuthBusiness)
+    private readonly businessRepository: Repository<AuthBusiness>,
+
+    private readonly jwtService: JwtService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -33,12 +38,12 @@ export class AuthService {
     return await bcrypt.compare(password, hash);
   }
 
-  async generateToken(user: AuthUser): Promise<string> {
-    const token = this.JwtService.sign({ sub: user.id, role: user.role });
+  async generateToken(user): Promise<string> {
+    const token = this.jwtService.signAsync({ sub: user.id, role: user.role });
     return token;
   }
 
-  async validateUser(dto) {
+  async validateUSER(dto) {
     const user = await this.usersService.findOneByEmail(dto.email);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -52,23 +57,89 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     const token = await this.generateToken(user);
-    return user.email, token;
+    return {
+      message: 'Login successful',
+      accessToken: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
-  async registerUser(dto){
+  async registerUser(dto) {
     const user = await this.usersService.findOneByEmail(dto.email);
-    if(user){
+    if (user) {
       throw new BadRequestException('Email already in use');
     }
     const password_hash = await this.hashPassword(dto.password);
-    const newUser = this.userRepository.create({
-      email: dto.email,
+    const newUser = this.businessRepository.create({
+      business_email: dto.email,
       password_hash,
       role: Role.USER,
     });
+    await this.userRepository.save(newUser);
 
-    return this.userRepository.save(newUser);
+    return {
+      message: 'Business registered successfully',
+      user: {
+        id: newUser.id,
+        email: newUser.business_email,
+        role: newUser.role,
+      },
+    };
+  }
 
-    
+  async registerBusiness(dto) {
+    const business = await this.businessService.findOneByEmailWithHash(
+      dto.business_email,
+    );
+    if (business) {
+      throw new BadRequestException('Business email already in use');
+    }
+    const password_hash = await this.hashPassword(dto.password);
+    const newBusiness = this.businessRepository.create({
+      business_email: dto.business_email,
+      password_hash,
+      role: Role.BUSINESS,
+    });
+    await this.businessRepository.save(newBusiness);
+
+    return {
+      message: 'Business registered successfully',
+      business: {
+        id: newBusiness.id,
+        email: newBusiness.business_email,
+        role: newBusiness.role,
+      },
+    };
+  }
+
+  async validateBusiness(dto) {
+    const business = await this.businessService.findOneByEmailWithHash(
+      dto.business_email,
+    );
+    if (!business || !business.password_hash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const isPasswordValid = await this.validatePassword(
+      dto.password,
+      business.password_hash,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const token = await this.generateToken(business);
+    return {
+      message: 'Login successful',
+      accessToken: token,
+      business: {
+        id: business.id,
+        email: business.business_email,
+        role: business.role,
+      },
+    };
   }
 }

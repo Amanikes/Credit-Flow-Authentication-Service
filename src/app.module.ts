@@ -8,6 +8,7 @@ import {TypeOrmModule} from '@nestjs/typeorm'
 import { config } from 'process';
 import { TokensModule } from './tokens/tokens.module';
 import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [UsersModule, BusinessModule,
@@ -24,6 +25,16 @@ import { AuthModule } from './auth/auth.module';
         database: config.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+      }),
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: 3600,
+        },
       }),
     }),
     TokensModule,
