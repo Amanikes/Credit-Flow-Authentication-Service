@@ -8,12 +8,13 @@ import { AuthUser } from 'src/users/entities/auth-user.entity';
 import { AuthBusiness } from 'src/business/entities/auth-business.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RefreshToken } from 'src/tokens/entities/refresh-token.entity';
 
 @Module({
   imports: [
     forwardRef(() => BusinessModule),
     forwardRef(() => UsersModule),
-    TypeOrmModule.forFeature([AuthUser, AuthBusiness]),
+    TypeOrmModule.forFeature([AuthUser, AuthBusiness, RefreshToken]),
    JwtModule.registerAsync({
      imports: [ConfigModule],
      inject: [ConfigService],
