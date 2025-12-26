@@ -31,7 +31,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
 
     private readonly tokensService: TokensService,
-
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -43,15 +42,25 @@ export class AuthService {
   }
 
   async generateToken(user): Promise<string> {
-    const token = this.jwtService.signAsync({ sub: user.id, role: user.role, email: user.email || user.business_email });
+    const token = this.jwtService.signAsync({
+      sub: user.id,
+      role: user.role,
+      email: user.email || user.businessEmail,
+    });
     return token;
   }
 
   async generateRefreshToken(user): Promise<string> {
-    const refreshToken = this.jwtService.signAsync({ sub: user.id, role: user.role, email: user.email || user.business_email  }, { expiresIn: '7d' });
+    const refreshToken = this.jwtService.signAsync(
+      {
+        sub: user.id,
+        role: user.role,
+        email: user.email || user.businessEmail,
+      },
+      { expiresIn: '7d' },
+    );
     return refreshToken;
   }
-
 
   async validateUSER(dto) {
     const user = await this.usersService.findOneByEmail(dto.email);
@@ -60,7 +69,7 @@ export class AuthService {
     }
     const isPasswordValid = await this.validatePassword(
       dto.password,
-      user.password_hash,
+      user.passwordHash,
     );
 
     if (!isPasswordValid) {
@@ -88,10 +97,10 @@ export class AuthService {
     if (user) {
       throw new BadRequestException('Email already in use');
     }
-    const password_hash = await this.hashPassword(dto.password);
+    const passwordHash = await this.hashPassword(dto.password);
     const newUser = this.userRepository.create({
       email: dto.email,
-      password_hash,
+      passwordHash,
       role: Role.USER,
     });
     await this.userRepository.save(newUser);
@@ -108,15 +117,15 @@ export class AuthService {
 
   async registerBusiness(dto) {
     const business = await this.businessService.findOneByEmailWithHash(
-      dto.business_email,
+      dto.businessEmail,
     );
     if (business) {
       throw new BadRequestException('Business email already in use');
     }
-    const password_hash = await this.hashPassword(dto.password);
+    const passwordHash = await this.hashPassword(dto.password);
     const newBusiness = this.businessRepository.create({
-      business_email: dto.business_email,
-      password_hash,
+      businessEmail: dto.businessEmail,
+      passwordHash,
       role: Role.BUSINESS,
     });
     await this.businessRepository.save(newBusiness);
@@ -125,7 +134,7 @@ export class AuthService {
       message: 'Business registered successfully',
       business: {
         id: newBusiness.id,
-        email: newBusiness.business_email,
+        email: newBusiness.businessEmail,
         role: newBusiness.role,
       },
     };
@@ -133,14 +142,14 @@ export class AuthService {
 
   async validateBusiness(dto) {
     const business = await this.businessService.findOneByEmailWithHash(
-      dto.business_email,
+      dto.businessEmail,
     );
-    if (!business || !business.password_hash) {
+    if (!business || !business.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const isPasswordValid = await this.validatePassword(
       dto.password,
-      business.password_hash,
+      business.passwordHash,
     );
 
     if (!isPasswordValid) {
@@ -150,14 +159,14 @@ export class AuthService {
     const refreshToken = await this.generateRefreshToken(business);
 
     await this.tokensService.saveRefreshToken(business.id, refreshToken);
-  
+
     return {
       message: 'Login successful',
       accessToken: token,
       refreshToken: refreshToken,
       business: {
         id: business.id,
-        email: business.business_email,
+        email: business.businessEmail,
         role: business.role,
       },
     };

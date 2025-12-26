@@ -15,20 +15,20 @@ export class BusinessService {
   }
 
   // 1. G
-  async findOneByEmail(business_email: string): Promise<AuthBusiness | null> {
+  async findOneByEmail(businessEmail: string): Promise<AuthBusiness | null> {
     const business = await this.businessRepository.findOne({
-      where: { business_email },
-      select: ['id', 'business_email', 'role'],
+      where: { businessEmail },
+      select: ['id', 'businessEmail', 'role'],
     });
     return business || null;
   }
 
   async findOneByEmailWithHash(
-    business_email: string,
+    businessEmail: string,
   ): Promise<AuthBusiness | null> {
     const business = await this.businessRepository.findOne({
-      where: { business_email },
-      select: ['id', 'business_email', 'role', 'password_hash'],
+      where: { businessEmail },
+      select: ['id', 'businessEmail', 'role', 'passwordHash'],
     });
     return business || null;
   }

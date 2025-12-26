@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-
 export enum Role {
   USER = 'user',
   ADMIN = 'admin',
@@ -21,9 +20,9 @@ export class AuthUser {
   email: string;
 
   @Column({ select: true })
-  password_hash: string;
+  passwordHash: string;
 
-  @Column({type: 'enum', enum: Role, default: Role.USER})
+  @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
 
   @CreateDateColumn()

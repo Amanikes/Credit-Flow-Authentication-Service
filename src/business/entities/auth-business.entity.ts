@@ -12,10 +12,10 @@ export class AuthBusiness {
   id: string;
 
   @Column({ unique: true })
-  business_email: string;
+  businessEmail: string;
 
   @Column({ select: false })
-  password_hash: string;
+  passwordHash: string;
 
   @CreateDateColumn()
   created_at: Date;

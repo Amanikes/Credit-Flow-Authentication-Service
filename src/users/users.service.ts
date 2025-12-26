@@ -15,18 +15,17 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<AuthUser> {
     const user = this.userRepository.create({
       email: createUserDto.email,
-      password_hash: createUserDto.password, // In real application, hash the password
+      passwordHash: createUserDto.password, // In real application, hash the password
     });
     return this.userRepository.save(user);
   }
 
-  async findOneByEmail(email: string): Promise<AuthUser| null> {
+  async findOneByEmail(email: string): Promise<AuthUser | null> {
     const user = await this.userRepository.findOne({ where: { email } });
-    
+
     return user || null;
   }
 
-  
   async findOneById(id: string): Promise<AuthUser> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (user) {

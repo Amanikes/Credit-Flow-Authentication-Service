@@ -8,7 +8,7 @@ export class CreateBusinessDto {
     example: 'ahlem@clothing.com',
     description: 'The email of the business',
   })
-  business_email: string;
+  businessEmail: string;
 
   @IsString()
   @MinLength(6)
