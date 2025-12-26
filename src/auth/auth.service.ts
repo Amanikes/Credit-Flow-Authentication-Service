@@ -15,6 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthBusiness } from 'src/business/entities/auth-business.entity';
+import { TokensService } from 'src/tokens/tokens.service';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +29,9 @@ export class AuthService {
     private readonly businessRepository: Repository<AuthBusiness>,
 
     private readonly jwtService: JwtService,
+
+    private readonly tokensService: TokensService,
+
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -39,9 +43,15 @@ export class AuthService {
   }
 
   async generateToken(user): Promise<string> {
-    const token = this.jwtService.signAsync({ sub: user.id, role: user.role });
+    const token = this.jwtService.signAsync({ sub: user.id, role: user.role, email: user.email || user.business_email });
     return token;
   }
+
+  async generateRefreshToken(user): Promise<string> {
+    const refreshToken = this.jwtService.signAsync({ sub: user.id, role: user.role, email: user.email || user.business_email  }, { expiresIn: '7d' });
+    return refreshToken;
+  }
+
 
   async validateUSER(dto) {
     const user = await this.usersService.findOneByEmail(dto.email);
@@ -57,9 +67,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     const token = await this.generateToken(user);
+    const refreshToken = await this.generateRefreshToken(user);
+
+    await this.tokensService.saveRefreshToken(user.id, refreshToken);
+
     return {
       message: 'Login successful',
       accessToken: token,
+      refreshToken: refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -74,18 +89,18 @@ export class AuthService {
       throw new BadRequestException('Email already in use');
     }
     const password_hash = await this.hashPassword(dto.password);
-    const newUser = this.businessRepository.create({
-      business_email: dto.email,
+    const newUser = this.userRepository.create({
+      email: dto.email,
       password_hash,
       role: Role.USER,
     });
     await this.userRepository.save(newUser);
 
     return {
-      message: 'Business registered successfully',
+      message: 'User registered successfully',
       user: {
         id: newUser.id,
-        email: newUser.business_email,
+        email: newUser.email,
         role: newUser.role,
       },
     };
@@ -132,9 +147,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     const token = await this.generateToken(business);
+    const refreshToken = await this.generateRefreshToken(business);
+
+    await this.tokensService.saveRefreshToken(business.id, refreshToken);
+  
     return {
       message: 'Login successful',
       accessToken: token,
+      refreshToken: refreshToken,
       business: {
         id: business.id,
         email: business.business_email,

@@ -9,9 +9,12 @@ import { AuthBusiness } from 'src/business/entities/auth-business.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RefreshToken } from 'src/tokens/entities/refresh-token.entity';
+import { TokensModule } from 'src/tokens/tokens.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     forwardRef(() => BusinessModule),
     forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([AuthUser, AuthBusiness, RefreshToken]),
@@ -24,7 +27,9 @@ import { RefreshToken } from 'src/tokens/entities/refresh-token.entity';
          expiresIn: configService.get<string>('JWT_EXPIRES_IN') as any || '1h',
        },
      }),
-   })
+   }),
+   TokensModule
+
   ],
   controllers: [AuthController],
   providers: [AuthService],

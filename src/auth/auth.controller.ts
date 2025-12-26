@@ -31,5 +31,9 @@ export class AuthController {
   async loginBusiness(@Body() dto: LoginDto) {
     return this.authService.validateBusiness(dto);
   }
+  @Post('/refresh-token')
+  async refreshToken(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshAccessToken(refreshToken);
+  }
 
 }
